@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"os"
 	"strconv"
 	"time"
 
@@ -25,6 +26,7 @@ type server struct {
 	redis       *redis.Client
 	P           int32
 	G           int32
+	logger      *log.Logger
 }
 
 var letterRunes = []rune("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -51,8 +53,11 @@ func (s *server) PGAgreement(ctx context.Context, req *pb.PGRequest) (*pb.PGResp
 	hash := CalculateSha1(nonce + ServerNonce)
 	err := s.redis.Set(hash, rand.Int31(), 20*time.Minute).Err()
 	if err != nil {
+		s.logger.Println(err)
 		return nil, err
 	}
+
+	s.logger.Println("Successful")
 	return &pb.PGResponse{
 		Nonce:       nonce,
 		ServerNonce: ServerNonce,
@@ -81,6 +86,7 @@ func (s *server) DiffieHellman(ctx context.Context, req *pb.DiffieHellmanRequest
 	hash := CalculateSha1(nonce + serverNonce)
 	b, err := s.redis.Get(hash).Result()
 	if err != nil {
+		s.logger.Println(err)
 		return nil, err
 	}
 	intb, _ := strconv.Atoi(b)
@@ -89,8 +95,13 @@ func (s *server) DiffieHellman(ctx context.Context, req *pb.DiffieHellmanRequest
 	GAB := ModularPower(GA, int32(intb), s.P)
 	err2 := s.redis.Set(string(GAB), 1, 20*time.Minute).Err()
 	if err2 != nil {
-		return nil, err
+		s.logger.Println(err2)
+		return nil, err2
 	}
+
+	s.logger.Println("successful")
+	s.redis.Del(hash)
+
 	return &pb.DiffieHellmanResponse{
 		Nonce:       nonce,
 		ServerNonce: serverNonce,
@@ -115,7 +126,7 @@ func main() {
 
 	s := grpc.NewServer()
 
-	pb.RegisterAuthzServer(s, &server{P: 23, G: 5, redis: rdb, NonceLength: 20})
+	pb.RegisterAuthzServer(s, &server{P: 23, G: 5, redis: rdb, NonceLength: 20, logger: log.New(os.Stdout, "INFO: ", log.Ldate|log.Ltime)})
 	reflection.Register(s)
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
