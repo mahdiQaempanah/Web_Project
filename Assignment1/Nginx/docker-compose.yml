@@ -1,0 +1,12 @@
+version: '3.9'
+services:
+  nginx:
+    container_name: my_nginx
+    image: nginx
+    volumes: 
+      - ./default.conf:/etc/nginx/nginx.conf:ro
+      - ./certs:/etc/nginx/certs
+      - ./html:/etc/nginx/html
+    ports:
+      - 80:80
+      - 443:443
