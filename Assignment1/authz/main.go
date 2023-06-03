@@ -60,8 +60,8 @@ func (s *server) DiffieHellman(ctx context.Context, req *pb.DiffieHellmanRequest
 	nonce := req.Nonce
 	serverNonce := req.ServerNonce
 	messageId := req.MessageId
-	GA := req.GA
-	GB := ModularPower(GA, s.b, s.P)
+	// GA := req.GA
+	GB := ModularPower(s.G, s.b, s.P)
 
 	return &pb.DiffieHellmanResponse{
 		Nonce:       nonce,
@@ -81,7 +81,7 @@ func main() {
 
 	s := grpc.NewServer()
 
-	pb.RegisterAuthzServer(s, &server{P: 23, G: 5, b: 15})
+	pb.RegisterAuthzServer(s, &server{P: 23, G: 5, b: 15, NonceLength: 20})
 	reflection.Register(s)
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
