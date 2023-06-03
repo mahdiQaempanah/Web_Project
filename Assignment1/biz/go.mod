@@ -3,6 +3,7 @@ module github.com/mahdiQaempanah/Web_Project/Assignment1/biz
 go 1.20
 
 require (
+	github.com/go-sql-driver/mysql v1.7.1
 	google.golang.org/grpc v1.55.0
 	google.golang.org/protobuf v1.30.0
 )
