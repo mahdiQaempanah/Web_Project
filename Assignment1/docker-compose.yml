@@ -1,20 +1,31 @@
 version: '3.9'
 services:
-  nginx:
-    container_name: my_nginx
-    image: nginx
-    volumes: 
-      - ./nginx/default.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/certs:/etc/nginx/certs
-      - ./nginx/html:/etc/nginx/html
+  postgres:
+    container_name: my_postgres
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
     ports:
-      - 80:80
-      - 443:443
-  redis:
-    container_name: my_redis
-    image: redis
-    command: redis-server --loglevel warning
-    ports:
-      - 6379:6379
-    # volumes:
-    #   - cache:/data
+      - 5432:5432
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+  # nginx:
+  #   container_name: my_nginx
+  #   image: nginx
+  #   volumes: 
+  #     - ./nginx/default.conf:/etc/nginx/nginx.conf:ro
+  #     - ./nginx/certs:/etc/nginx/certs
+  #     - ./nginx/html:/etc/nginx/html
+  #   ports:
+  #     - 80:80
+  #     - 443:443
+  # redis:
+  #   container_name: my_redis
+  #   image: redis
+  #   command: redis-server --loglevel warning
+  #   ports:
+  #     - 6379:6379
+
+  
