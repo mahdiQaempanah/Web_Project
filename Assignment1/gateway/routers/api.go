@@ -13,6 +13,7 @@ func Api() *gin.Engine {
 	router.GET("/api/v1/authz/dh", handler.DiffieHellman)
 
 	router.GET("/api/v1/get", handler.GetUsers)
+	router.GET("/api/v1/getwithinj", handler.GetUsersWithSQLInject)
 
 	router.Run("localhost:8080")
 

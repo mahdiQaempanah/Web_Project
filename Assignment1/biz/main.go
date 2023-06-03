@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -11,7 +12,7 @@ import (
 	"strconv"
 
 	"github.com/go-redis/redis"
-	"github.com/go-sql-driver/mysql"
+	_ "github.com/lib/pq"
 	"github.com/mahdiQaempanah/Web_Project/Assignment1/biz/grpc/biz"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -19,23 +20,24 @@ import (
 
 type server struct {
 	biz.UnimplementedBizServer
-	sql_db *sql.DB
+	db     *sql.DB
 	redis  *redis.Client
+	logger *log.Logger
 }
 
-func (s *server) ValidateUser(auth_key int32) (bool, error) {
+func (s *server) isAuthenticated(auth_key int32) error {
 	val, err := s.redis.Get(strconv.Itoa(int(auth_key))).Result()
 	if err != nil {
-		return false, err
+		return err
 	}
-	valint, err2 := strconv.Atoi(val)
-	if err2 != nil {
-		return false, err2
+	valint, err := strconv.Atoi(val)
+	if err != nil {
+		return err
 	}
 	if valint == 1 {
-		return true, nil
+		return nil
 	}
-	return false, nil
+	return errors.New("authentication failed")
 }
 
 func checkUserValidity(user string) bool {
@@ -46,38 +48,30 @@ func checkUserValidity(user string) bool {
 	return res
 }
 
-func (s *server) GetUsers(ctx context.Context, req *biz.GetUserRequest) (*biz.GetUserResponse, error) {
-	userId := req.UserID
-	auth_key := req.AuthKey
-	messageId := req.MessageId
+func (s *server) postgresSelectUser(userId string) ([]*biz.User, error) {
+	s.logger.Println("User is valid")
 
-	validate_result, err := s.ValidateUser(auth_key)
-	if err != nil {
-		return nil, err
-	}
-	if !validate_result {
-		return nil, errors.New("authentication failed")
-	}
-
-	if !checkUserValidity(userId) {
-		return nil, errors.New("userId is not numeric")
-	}
-
-	var is_empty bool
-	if err = s.sql_db.QueryRow("select * from USERS where id = ? IS EMPTY", userId).Scan(&is_empty); err != nil {
+	var is_empty int
+	statment := fmt.Sprintf(`select count(*) from USERS where id='%s';`, userId)
+	s.logger.Println("statement is : " + statment)
+	if err := s.db.QueryRow(statment).Scan(&is_empty); err != nil {
 		return nil, err
 	}
 	var rows *sql.Rows
 
-	if is_empty {
+	s.logger.Println("Is empty: " + fmt.Sprint(is_empty))
+
+	if is_empty == 0 {
 		var err error
-		rows, err = s.sql_db.Query("select top 100 * from USERS")
+		query := "select * from USERS limit 100;"
+		rows, err = s.db.Query(query)
 		if err != nil {
 			return nil, err
 		}
 	} else {
 		var err error
-		rows, err = s.sql_db.Query("select * from USERS where Id = ?", userId)
+		query := fmt.Sprintf(`select * from USERS where id='%s';`, userId)
+		rows, err = s.db.Query(query)
 		if err != nil {
 			return nil, err
 		}
@@ -86,14 +80,35 @@ func (s *server) GetUsers(ctx context.Context, req *biz.GetUserRequest) (*biz.Ge
 	result := []*biz.User{}
 	for rows.Next() {
 		var user biz.User
-		if err := rows.Scan(&user); err != nil {
+		if err := rows.Scan(&user.Name, &user.Surname, &user.Id, &user.Age, &user.Sex); err != nil {
 			return nil, err
 		}
 		result = append(result, &user)
 	}
 
+	return result, nil
+}
+
+func (s *server) GetUsers(ctx context.Context, req *biz.GetUserRequest) (*biz.GetUserResponse, error) {
+	userId := req.UserID
+	auth_key := req.AuthKey
+	messageId := req.MessageId
+
+	err := s.isAuthenticated(auth_key)
+	if err != nil {
+		return nil, err
+	}
+
+	if !checkUserValidity(userId) {
+		return nil, errors.New("user_id is not numeric")
+	}
+
+	users, err := s.postgresSelectUser(userId)
+	if err != nil {
+		return nil, err
+	}
 	return &biz.GetUserResponse{
-		Users:     result,
+		Users:     users,
 		MessageId: messageId + 1}, nil
 }
 
@@ -102,45 +117,17 @@ func (s *server) GetUsersWithSQLInject(ctx context.Context, req *biz.GetUserRequ
 	auth_key := req.AuthKey
 	messageId := req.MessageId
 
-	validate_result, err := s.ValidateUser(auth_key)
+	err := s.isAuthenticated(auth_key)
 	if err != nil {
 		return nil, err
 	}
-	if !validate_result {
-		return nil, errors.New("authentication failed")
-	}
 
-	var is_empty bool
-	if err = s.sql_db.QueryRow("select * from USERS where id = ? IS EMPTY", userId).Scan(&is_empty); err != nil {
+	users, err := s.postgresSelectUser(userId)
+	if err != nil {
 		return nil, err
 	}
-	var rows *sql.Rows
-
-	if is_empty {
-		var err error
-		rows, err = s.sql_db.Query("select top 100 * from USERS")
-		if err != nil {
-			return nil, err
-		}
-	} else {
-		var err error
-		rows, err = s.sql_db.Query("select * from USERS where Id = ?", userId)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	result := []*biz.User{}
-	for rows.Next() {
-		var user biz.User
-		if err := rows.Scan(&user); err != nil {
-			return nil, err
-		}
-		result = append(result, &user)
-	}
-
 	return &biz.GetUserResponse{
-		Users:     result,
+		Users:     users,
 		MessageId: messageId + 1}, nil
 }
 
@@ -150,17 +137,17 @@ func main() {
 		panic(err)
 	}
 
-	cfg := mysql.Config{
-		User:   os.Getenv("POSTGRES_USER"),
-		Passwd: os.Getenv("POSTGRES_PASSWORD"),
-		Net:    "tcp",
-		Addr:   "localhost:5432",
-		DBName: "POSTGRES_DB",
-	}
-
-	db, err := sql.Open("mysql", cfg.FormatDSN())
+	// TODO: use viper
+	connStr := "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
+	}
+	err = db.Ping()
+	if err != nil {
+		fmt.Println("Error: " + err.Error())
+	} else {
+		fmt.Println("Successfully connected to Fucking DB")
 	}
 
 	rdb := redis.NewClient(&redis.Options{
@@ -170,7 +157,7 @@ func main() {
 	})
 
 	s := grpc.NewServer()
-	biz.RegisterBizServer(s, &server{sql_db: db, redis: rdb})
+	biz.RegisterBizServer(s, &server{db: db, redis: rdb, logger: log.New(os.Stdout, "logger: ", log.Ldate|log.Ltime)})
 	reflection.Register(s)
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)

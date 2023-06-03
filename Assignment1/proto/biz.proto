@@ -28,5 +28,4 @@ message User {
     string id = 3;
     int32 age = 4;
     string sex = 5;
-    google.protobuf.Timestamp createdAt = 6;
 }
