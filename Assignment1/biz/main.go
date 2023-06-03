@@ -145,7 +145,7 @@ func (s *server) GetUsersWithSQLInject(ctx context.Context, req *pb.GetUserReque
 }
 
 func main() {
-	listener, err := net.Listen("tcp", ":8080")
+	listener, err := net.Listen("tcp", ":5062")
 	if err != nil {
 		panic(err)
 	}
