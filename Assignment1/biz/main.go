@@ -12,13 +12,13 @@ import (
 
 	"github.com/go-redis/redis"
 	"github.com/go-sql-driver/mysql"
-	"github.com/mahdiQaempanah/Web_Project/Assignment1/biz/server/pb"
+	"github.com/mahdiQaempanah/Web_Project/Assignment1/biz/grpc/biz"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 )
 
 type server struct {
-	pb.UnimplementedBizServer
+	biz.UnimplementedBizServer
 	sql_db *sql.DB
 	redis  *redis.Client
 }
@@ -46,7 +46,7 @@ func checkUserValidity(user string) bool {
 	return res
 }
 
-func (s *server) GetUsers(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+func (s *server) GetUsers(ctx context.Context, req *biz.GetUserRequest) (*biz.GetUserResponse, error) {
 	userId := req.UserID
 	auth_key := req.AuthKey
 	messageId := req.MessageId
@@ -83,21 +83,21 @@ func (s *server) GetUsers(ctx context.Context, req *pb.GetUserRequest) (*pb.GetU
 		}
 	}
 
-	result := []*pb.User{}
+	result := []*biz.User{}
 	for rows.Next() {
-		var user pb.User
+		var user biz.User
 		if err := rows.Scan(&user); err != nil {
 			return nil, err
 		}
 		result = append(result, &user)
 	}
 
-	return &pb.GetUserResponse{
+	return &biz.GetUserResponse{
 		Users:     result,
 		MessageId: messageId + 1}, nil
 }
 
-func (s *server) GetUsersWithSQLInject(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
+func (s *server) GetUsersWithSQLInject(ctx context.Context, req *biz.GetUserRequest) (*biz.GetUserResponse, error) {
 	userId := req.UserID
 	auth_key := req.AuthKey
 	messageId := req.MessageId
@@ -130,16 +130,16 @@ func (s *server) GetUsersWithSQLInject(ctx context.Context, req *pb.GetUserReque
 		}
 	}
 
-	result := []*pb.User{}
+	result := []*biz.User{}
 	for rows.Next() {
-		var user pb.User
+		var user biz.User
 		if err := rows.Scan(&user); err != nil {
 			return nil, err
 		}
 		result = append(result, &user)
 	}
 
-	return &pb.GetUserResponse{
+	return &biz.GetUserResponse{
 		Users:     result,
 		MessageId: messageId + 1}, nil
 }
@@ -170,7 +170,7 @@ func main() {
 	})
 
 	s := grpc.NewServer()
-	pb.RegisterBizServer(s, &server{sql_db: db, redis: rdb})
+	biz.RegisterBizServer(s, &server{sql_db: db, redis: rdb})
 	reflection.Register(s)
 	if err := s.Serve(listener); err != nil {
 		log.Fatalf("failed to serve: %v", err)
