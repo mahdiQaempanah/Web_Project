@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -9,7 +10,7 @@ import (
 	"time"
 
 	"github.com/go-redis/redis"
-	"github.com/mahdiQaempanah/Web_Project/Assignment1/authz/server/pb"
+	"github.com/mahdiQaempanah/Web_Project/Assignment1/authz/grpc/pb"
 
 	"math/rand"
 
@@ -86,16 +87,16 @@ func (s *server) DiffieHellman(ctx context.Context, req *pb.DiffieHellmanRequest
 	hash := CalculateSha1(nonce + serverNonce)
 	b, err := s.redis.Get(hash).Result()
 	if err != nil {
-		s.logger.Println(err)
+		s.logger.Println(err.Error())
 		return nil, err
 	}
 	intb, _ := strconv.Atoi(b)
 	GB := ModularPower(s.G, int32(intb), s.P)
 
 	GAB := ModularPower(GA, int32(intb), s.P)
-	err2 := s.redis.Set(string(GAB), 1, 20*time.Minute).Err()
+	err2 := s.redis.Set(fmt.Sprint(GAB), 1, 20*time.Minute).Err()
 	if err2 != nil {
-		s.logger.Println(err2)
+		s.logger.Println(err2.Error())
 		return nil, err2
 	}
 
@@ -117,7 +118,7 @@ func main() {
 		DB:       0,
 	})
 
-	listener, err := net.Listen("tcp", ":8080")
+	listener, err := net.Listen("tcp", "localhost:5052")
 	if err != nil {
 		panic(err)
 	}

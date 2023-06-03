@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.2.0
 // - protoc             v3.21.12
-// source: server.proto
+// source: authz.proto
 
 package pb
 
@@ -36,7 +36,7 @@ func NewAuthzClient(cc grpc.ClientConnInterface) AuthzClient {
 
 func (c *authzClient) PGAgreement(ctx context.Context, in *PGRequest, opts ...grpc.CallOption) (*PGResponse, error) {
 	out := new(PGResponse)
-	err := c.cc.Invoke(ctx, "/authz_server.Authz/PGAgreement", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/authz_client.Authz/PGAgreement", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *authzClient) PGAgreement(ctx context.Context, in *PGRequest, opts ...gr
 
 func (c *authzClient) DiffieHellman(ctx context.Context, in *DiffieHellmanRequest, opts ...grpc.CallOption) (*DiffieHellmanResponse, error) {
 	out := new(DiffieHellmanResponse)
-	err := c.cc.Invoke(ctx, "/authz_server.Authz/DiffieHellman", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/authz_client.Authz/DiffieHellman", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func _Authz_PGAgreement_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/authz_server.Authz/PGAgreement",
+		FullMethod: "/authz_client.Authz/PGAgreement",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthzServer).PGAgreement(ctx, req.(*PGRequest))
@@ -112,7 +112,7 @@ func _Authz_DiffieHellman_Handler(srv interface{}, ctx context.Context, dec func
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/authz_server.Authz/DiffieHellman",
+		FullMethod: "/authz_client.Authz/DiffieHellman",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuthzServer).DiffieHellman(ctx, req.(*DiffieHellmanRequest))
@@ -124,7 +124,7 @@ func _Authz_DiffieHellman_Handler(srv interface{}, ctx context.Context, dec func
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Authz_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "authz_server.Authz",
+	ServiceName: "authz_client.Authz",
 	HandlerType: (*AuthzServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -137,5 +137,5 @@ var Authz_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "server.proto",
+	Metadata: "authz.proto",
 }
