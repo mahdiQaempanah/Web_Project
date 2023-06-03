@@ -7,6 +7,8 @@ import (
 	"log"
 	"net"
 	"os"
+	"regexp"
+	"strconv"
 
 	"github.com/go-redis/redis"
 	"github.com/go-sql-driver/mysql"
@@ -22,17 +24,28 @@ type server struct {
 }
 
 func (s *server) ValidateUser(auth_key int32) (bool, error) {
-	val, err := s.redis.Get(auth_key).Result()
+	val, err := s.redis.Get(strconv.Itoa(int(auth_key))).Result()
 	if err != nil {
 		return false, err
 	}
-	if val == 1 {
+	valint, err2 := strconv.Atoi(val)
+	if err2 != nil {
+		return false, err2
+	}
+	if valint == 1 {
 		return true, nil
 	}
 	return false, nil
 }
 
-// We should implement this
+func checkUserValidity(user string) bool {
+	res, err := regexp.MatchString("^[0-9]*$", user)
+	if err != nil {
+		return false
+	}
+	return res
+}
+
 func (s *server) GetUsers(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
 	userId := req.UserID
 	auth_key := req.AuthKey
@@ -42,8 +55,12 @@ func (s *server) GetUsers(ctx context.Context, req *pb.GetUserRequest) (*pb.GetU
 	if err != nil {
 		return nil, err
 	}
-	if validate_result == false {
-		return nil, errors.New("Authentication Failed.")
+	if !validate_result {
+		return nil, errors.New("authentication failed")
+	}
+
+	if !checkUserValidity(userId) {
+		return nil, errors.New("userId is not numeric")
 	}
 
 	var is_empty bool
@@ -52,7 +69,7 @@ func (s *server) GetUsers(ctx context.Context, req *pb.GetUserRequest) (*pb.GetU
 	}
 	var rows *sql.Rows
 
-	if is_empty == true {
+	if is_empty {
 		var err error
 		rows, err = s.sql_db.Query("select top 100 * from USERS")
 		if err != nil {
@@ -81,10 +98,50 @@ func (s *server) GetUsers(ctx context.Context, req *pb.GetUserRequest) (*pb.GetU
 }
 
 func (s *server) GetUsersWithSQLInject(ctx context.Context, req *pb.GetUserRequest) (*pb.GetUserResponse, error) {
-	// nonce := req.UserID
-	// auth_key = req.AuthKey
-	// messageId := req.MessageId
-	return nil, nil
+	userId := req.UserID
+	auth_key := req.AuthKey
+	messageId := req.MessageId
+
+	validate_result, err := s.ValidateUser(auth_key)
+	if err != nil {
+		return nil, err
+	}
+	if !validate_result {
+		return nil, errors.New("authentication failed")
+	}
+
+	var is_empty bool
+	if err = s.sql_db.QueryRow("select * from USERS where id = ? IS EMPTY", userId).Scan(&is_empty); err != nil {
+		return nil, err
+	}
+	var rows *sql.Rows
+
+	if is_empty {
+		var err error
+		rows, err = s.sql_db.Query("select top 100 * from USERS")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		var err error
+		rows, err = s.sql_db.Query("select * from USERS where Id = ?", userId)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	result := []*pb.User{}
+	for rows.Next() {
+		var user pb.User
+		if err := rows.Scan(&user); err != nil {
+			return nil, err
+		}
+		result = append(result, &user)
+	}
+
+	return &pb.GetUserResponse{
+		Users:     result,
+		MessageId: messageId + 1}, nil
 }
 
 func main() {
