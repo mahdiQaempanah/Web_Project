@@ -123,6 +123,8 @@ func main() {
 		panic(err)
 	}
 
+	fmt.Println("Authz successfully started")
+
 	rand.Seed(382992)
 
 	s := grpc.NewServer()

@@ -11,8 +11,7 @@ services:
       - 5432:5432
     volumes:
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - my_network
+   
   nginx:
     container_name: my_nginx
     image: nginx
@@ -23,8 +22,6 @@ services:
     ports:
       - 80:80
       - 443:443
-    networks:
-      - my_network
       
   redis:
     container_name: my_redis
@@ -32,25 +29,17 @@ services:
     command: redis-server --loglevel warning
     ports:
       - 6379:6379
-    networks:
-      - my_network
 
   auth:
     container_name: my_auth
     image: auth_server_image
     ports:
       - 5052:5052
-    networks:
-      - my_network
 
   gateway:
     container_name: my_gateway
     image: gateway_image
     ports:
-      - 8080:8080
-    networks:
-      - my_network
+      - 6433:6433
+
   
-networks:
-  my_network:
-    driver: bridge
