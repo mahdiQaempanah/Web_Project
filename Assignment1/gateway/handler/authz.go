@@ -10,7 +10,7 @@ import (
 )
 
 func RequestPG(c *gin.Context) {
-	conn, err := grpc.Dial("localhost:5052", grpc.WithInsecure())
+	conn, err := grpc.Dial("auth:5052", grpc.WithInsecure())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -35,7 +35,7 @@ func RequestPG(c *gin.Context) {
 }
 
 func DiffieHellman(c *gin.Context) {
-	conn, err := grpc.Dial("localhost:5052", grpc.WithInsecure())
+	conn, err := grpc.Dial("auth:5052", grpc.WithInsecure())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return

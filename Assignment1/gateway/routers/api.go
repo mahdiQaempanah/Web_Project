@@ -15,7 +15,7 @@ func Api() *gin.Engine {
 	router.GET("/api/v1/get", handler.GetUsers)
 	router.GET("/api/v1/getwithinj", handler.GetUsersWithSQLInject)
 
-	router.Run("localhost:6433")
+	router.RunTLS("0.0.0.0:6433", "/certs/server.crt", "/certs/server.key")
 
 	return router
 }

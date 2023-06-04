@@ -35,11 +35,16 @@ services:
     image: auth_server_image
     ports:
       - 5052:5052
+    environment:
+      REDIS_ADDRESS: "redis:6379"
 
   gateway:
     container_name: my_gateway
     image: gateway_image
     ports:
       - 6433:6433
+    volumes:
+      - ./nginx/certs/localhost.crt:/certs/server.crt
+      - ./nginx/certs/localhost.key:/certs/server.key
 
   

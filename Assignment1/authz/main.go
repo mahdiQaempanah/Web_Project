@@ -112,13 +112,16 @@ func (s *server) DiffieHellman(ctx context.Context, req *pb.DiffieHellmanRequest
 }
 
 func main() {
+
+	redisAddress := os.Getenv("REDIS_ADDRESS")
+
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     redisAddress,
 		Password: "",
 		DB:       0,
 	})
 
-	listener, err := net.Listen("tcp", "localhost:5052")
+	listener, err := net.Listen("tcp", "0.0.0.0:5052")
 	if err != nil {
 		panic(err)
 	}
