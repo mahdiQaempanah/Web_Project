@@ -121,6 +121,12 @@ func main() {
 		DB:       0,
 	})
 
+	err := rdb.Set("-1", 1, 20*time.Hour).Err()
+
+	if err != nil {
+		panic(err)
+	}
+
 	listener, err := net.Listen("tcp", "0.0.0.0:5052")
 	if err != nil {
 		panic(err)
