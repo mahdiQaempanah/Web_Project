@@ -6,6 +6,6 @@ COPY . /src/
 
 RUN go mod tidy
 
-EXPOSE 6433
+EXPOSE 5062
 
 CMD go run main.go

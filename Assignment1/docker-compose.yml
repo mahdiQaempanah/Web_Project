@@ -38,6 +38,15 @@ services:
     environment:
       REDIS_ADDRESS: "redis:6379"
 
+  biz:
+    container_name: my_biz
+    image: biz_server_image
+    ports:
+      - 5062:5062
+    environment:
+      REDIS_ADDRESS: "redis:6379"
+      POSTGRES_ADDRESS: "postgres:5432"
+
   gateway:
     container_name: my_gateway
     image: gateway_image

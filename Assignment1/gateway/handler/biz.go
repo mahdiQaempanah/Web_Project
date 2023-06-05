@@ -10,7 +10,7 @@ import (
 )
 
 func GetUsers(c *gin.Context) {
-	conn, err := grpc.Dial("localhost:5062", grpc.WithInsecure())
+	conn, err := grpc.Dial("biz:5062", grpc.WithInsecure())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return
@@ -35,7 +35,7 @@ func GetUsers(c *gin.Context) {
 }
 
 func GetUsersWithSQLInject(c *gin.Context) {
-	conn, err := grpc.Dial("localhost:5062", grpc.WithInsecure())
+	conn, err := grpc.Dial("biz:5062", grpc.WithInsecure())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, err)
 		return

@@ -136,9 +136,9 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	postgresAddress := os.Getenv("POSTGRES_ADDRESS")
 
-	// TODO: use viper
-	connStr := "postgres://postgres:postgres@localhost:5432/postgres?sslmode=disable"
+	connStr := "postgres://postgres:postgres@" + postgresAddress + "/postgres?sslmode=disable"
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
 		log.Fatal(err)
@@ -150,8 +150,10 @@ func main() {
 		fmt.Println("Successfully connected to Fucking DB")
 	}
 
+	redisAddress := os.Getenv("REDIS_ADDRESS")
+
 	rdb := redis.NewClient(&redis.Options{
-		Addr:     "localhost:6379",
+		Addr:     redisAddress,
 		Password: "",
 		DB:       0,
 	})
