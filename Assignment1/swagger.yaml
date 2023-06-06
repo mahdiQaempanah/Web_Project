@@ -1,0 +1,262 @@
+openapi: 3.0.3
+info:
+  title: Web Homework 1
+  description: |-
+    Students
+    - Abolfazl Soltani 99109217
+    - Alipasha Montaseri
+    - Mahdi Qaempanah  contact:
+    email: apiteam@swagger.io
+  version: 1.0.11
+servers:
+  - url: https://nginx:443/api/v1
+paths:
+  /authz/pg:
+    post:
+      tags:
+        - Authentication
+      summary: Set two values P and G for Diffie-Hellman
+      description: Set two values P and G for Diffie-Hellman
+      operationId: get_pg
+      requestBody:
+        description: Set values of Diffi-Hellman
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nonce:
+                  type: string
+                message_id:
+                  type: integer
+              required:
+                - nonce
+                - message_id
+            example:
+              nonce: ABCDEFGHIJKLMNOPQRST
+              message_id: 2
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nonce: 
+                    type: string
+                    example: "ABCDEFGHIJKLMNOPQRST"
+                  server_nonce:
+                    type: string
+                    example: "GHIJKLMNOPQRSTUVWXYZ"
+                  message_id:
+                    type: integer
+                    example: 3
+                  p:
+                    type: integer
+                    example: 23
+                  g:
+                    type: integer
+                    example: 5
+        '400':
+          description: Invalid data supplied
+        '500':
+          description: Status Internal Server Error
+        '502':
+          description: Error happened in gRPC connection
+          
+
+  /authz/dh:
+    post:
+      tags:
+        - Authentication
+      summary: Set private key with Diffie-Hellman
+      description: Save private key of the user as authenticated
+      operationId: get_dh
+      requestBody:
+        description: Get values of client and public key
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                nonce:
+                  type: string
+                  example: "ABCDEFGHIJKLMNOPQRST"
+                server_nonce:
+                  type: string
+                  example: "GHIJKLMNOPQRSTUVWXYZ"
+                message_id:
+                  type: integer
+                  example: 6
+                g_a:
+                  type: integer
+                  example: 2
+              required:
+                - nonce
+                - server_nonce
+                - message_id
+                - g_a
+        required: true
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  nonce: 
+                    type: string
+                    example: "ABCDEFGHIJKLMNOPQRST"
+                  server_nonce:
+                    type: string
+                    example: "GHIJKLMNOPQRSTUVWXYZ"
+                  message_id:
+                    type: integer
+                    example: 7
+                  g_b:
+                    type: integer
+                    example: 8
+        '400':
+          description: Invalid data supplied
+        '500':
+          description: Status Internal Server Error
+        '502':
+          description: Error happened in gRPC connection
+          
+
+  /get:
+    get:
+      tags:
+        - Authentication
+      summary: Set private key with Diffie-Hellman
+      description: Save private key of the user as authenticated
+      operationId: get_users
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: string
+          required: true
+          example: "99109199"
+          description: Numeric ID of the user to get
+        - in: query
+          name: auth_key
+          schema:
+            type: integer
+          required: true
+          example: 8
+          description: Private key of the user
+        - in: query
+          name: message_id
+          schema:
+            type: integer
+          required: true
+          example: 10
+          description: Id of the message
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users: 
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: Abolfazl
+                        surname:
+                          type: string
+                          example: Soltani
+                        id:
+                          type: string
+                          example: 99109217
+                        age:
+                          type: integer
+                          example: 21
+                        sex:
+                          type: string
+                          example: Man
+                  message_id:
+                    type: string
+                    example: 11
+        '400':
+          description: Invalid data supplied
+        '500':
+          description: Status Internal Server Error
+        '502':
+          description: Error happened in gRPC connection
+          
+  /getwithinj:
+    get:
+      tags:
+        - Authentication
+      summary: Set private key with Diffie-Hellman
+      description: Save private key of the user as authenticated
+      operationId: get_users_with_inj
+      parameters:
+        - in: query
+          name: user_id
+          schema:
+            type: string
+          required: true
+          example: "99109199"
+          description: Numeric ID of the user to get
+        - in: query
+          name: auth_key
+          schema:
+            type: integer
+          required: true
+          example: 8
+          description: Private key of the user
+        - in: query
+          name: message_id
+          schema:
+            type: integer
+          required: true
+          example: 10
+          description: Id of the message
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users: 
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        name:
+                          type: string
+                          example: Abolfazl
+                        surname:
+                          type: string
+                          example: Soltani
+                        id:
+                          type: string
+                          example: 99109217
+                        age:
+                          type: integer
+                          example: 21
+                        sex:
+                          type: string
+                          example: Man
+                  message_id:
+                    type: string
+                    example: 11
+        '400':
+          description: Invalid data supplied
+        '500':
+          description: Status Internal Server Error
+        '502':
+          description: Error happened in gRPC connection          
